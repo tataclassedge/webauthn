@@ -6,7 +6,7 @@
     <script type="text/javascript">
 
         /////
-        function loadDevice(callee) {
+        function loadDevice21(callee) {
             console.log('TCE: loadDevice -> callee', callee);
             let chosenHeartRateService = null;
 
@@ -68,7 +68,7 @@
         }
 
         //////
-        function loadDevice1(callee) {
+        function loadDevice(callee) {
             navigator.bluetooth.requestDevice({
                 acceptAllDevices: true,
                 optionalServices: ['battery_service']
