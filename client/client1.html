@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+<title>Client Wen Authn 1</title>
+
+<head>
+    <script type="text/javascript">
+
+        /////
+        function loadDevice21(callee) {
+            console.log('TCE: loadDevice -> callee', callee);
+            let chosenHeartRateService = null;
+
+            navigator.bluetooth.requestDevice({
+                filters: [{
+                    services: ['heart_rate'],
+                }]
+            }).then(device => device.gatt.connect())
+                .then(server => server.
+                    getPrimaryService(
+                        'heart_rate'))
+                .then(service => {
+                    chosenHeartRateService = service;
+                    return Promise.all([
+                        service.
+                            getCharacteristic(
+                                'body_sensor_location')
+                            .then(handleBodySensorLocationCharacteristic),
+                        service.
+                            getCharacteristic(
+                                'heart_rate_measurement')
+                            .then(handleHeartRateMeasurementCharacteristic),
+                    ]);
+                });
+
+            function handleBodySensorLocationCharacteristic(characteristic) {
+                if (characteristic === null) {
+                    console.log("Unknown sensor location.");
+                    return Promise.resolve();
+                }
+                return characteristic.readValue()
+                    .then(sensorLocationData => {
+                        let sensorLocation = sensorLocationData.getUint8(0);
+                        switch (sensorLocation) {
+                            case 0: return 'Other';
+                            case 1: return 'Chest';
+                            case 2: return 'Wrist';
+                            case 3: return 'Finger';
+                            case 4: return 'Hand';
+                            case 5: return 'Ear Lobe';
+                            case 6: return 'Foot';
+                            default: return 'Unknown';
+                        }
+                    }).then(location => console.log(location));
+            }
+
+            function handleHeartRateMeasurementCharacteristic(characteristic) {
+                return characteristic.startNotifications()
+                    .then(char => {
+                        characteristic.addEventListener('characteristicvaluechanged',
+                            onHeartRateChanged);
+                    });
+            }
+
+            function onHeartRateChanged(event) {
+                let characteristic = event.target;
+                console.log(parseHeartRate(characteristic.value));
+            }
+        }
+
+        //////
+        function loadDevice(callee) {
+            navigator.bluetooth.requestDevice({
+                acceptAllDevices: true,
+                optionalServices: ['battery_service']
+            })
+                .then(device => {
+                    console.log('TCE: onBodyLoad -> device', device);
+
+                })
+                .catch(error => {
+                    console.log('TCE: onBodyLoad -> error', error);
+                });
+        }
+        function loadDevice4(callee) {
+            var bluetoothDevice;
+
+            function onButtonClick() {
+                bluetoothDevice = null;
+                log('Requesting any Bluetooth Device...');
+                navigator.bluetooth.requestDevice({
+                    // filters: [...] <- Prefer filters to save energy & show relevant devices.
+                    acceptAllDevices: true
+                })
+                    .then(device => {
+                        bluetoothDevice = device;
+                        bluetoothDevice.addEventListener('gattserverdisconnected', onDisconnected);
+                        connect();
+                    })
+                    .catch(error => {
+                        log('Argh! ' + error);
+                    });
+            }
+
+            function connect() {
+                exponentialBackoff(3 /* max retries */, 2 /* seconds delay */,
+                    function toTry() {
+                        time('Connecting to Bluetooth Device... ');
+                        return bluetoothDevice.gatt.connect();
+                    },
+                    function success() {
+                        log('> Bluetooth Device connected. Try disconnect it now.');
+                    },
+                    function fail() {
+                        time('Failed to reconnect.');
+                    });
+            }
+
+            function onDisconnected() {
+                log('> Bluetooth Device disconnected.....');
+                connect();
+            }
+
+            /* Utils */
+
+            // This function keeps calling "toTry" until promise resolves or has
+            // retried "max" number of times. First retry has a delay of "delay" seconds.
+            // "success" is called upon success.
+            function exponentialBackoff(max, delay, toTry, success, fail) {
+                toTry().then(result => success(result))
+                    .catch(_ => {
+                        if (max === 0) {
+                            return fail();
+                        }
+                        time('Retrying in ' + delay + 's... (' + max + ' tries left)');
+                        setTimeout(function () {
+                            exponentialBackoff(--max, delay * 2, toTry, success, fail);
+                        }, delay * 1000);
+                    });
+            }
+
+            function time(text) {
+                log('[' + new Date().toJSON().substr(11, 8) + '] ' + text);
+            }
+            function log(ccc) {
+                console.log('TCE: log -> ccc', ccc);
+
+            }
+            onButtonClick()
+        }
+        function loadDevice3(callee) {
+
+
+            // Selected device object cache
+            let deviceCache = null;
+
+            // Launch Bluetooth device chooser and connect to the selected
+            function connect() {
+                return (deviceCache ? Promise.resolve(deviceCache) :
+                    requestBluetoothDevice())
+                    .then(device => connectDeviceAndCacheCharacteristic(device))
+                    .then(characteristic => startNotifications(characteristic))
+                    .catch(error => console.log(error));
+            }
+
+            function requestBluetoothDevice() {
+                console.log('TCE: requestBluetoothDevice -> Requesting bluetooth device...');
+
+                return navigator.bluetooth.requestDevice({
+                    filters: [{ services: [myService] }],
+                })
+                    .then(device => {
+                        console.log('"' + device.name + '" bluetooth device selected');
+                        deviceCache = device;
+
+                        // Listen for disconnet event
+                        deviceCache.addEventListener('gattserverdisconnected',
+                            handleDisconnection);
+
+                        return deviceCache;
+                    });
+            }
+            connect()
+
+        }
+        function loadDevice2(callee) {
+            navigator.bluetooth.requestDevice({ filters: [{ services: ['battery_service'] }] })
+                .then(device => device.gatt.connect())
+                .then(server => {
+                    // Getting Battery Service...
+                    return server.getPrimaryService('battery_service');
+                })
+                .then(service => {
+                    // Getting Battery Level Characteristic...
+                    return service.getCharacteristic('battery_level');
+                })
+                .then(characteristic => {
+                    // Reading Battery Level...
+                    return characteristic.readValue();
+                })
+                .then(value => {
+                    console.log('Battery percentage is ' + value.getUint8(0));
+                })
+                .catch(error => { console.log(error); });
+        }
+        function onBodyLoad(callee) {
+            console.log('TCE: onBodyLoad -> callee', callee);
+
+
+            // console.log('TCE: onBodyLoad -> button', button);
+            button.addEventListener('pointerup', function (event) {
+                // Call navigator.bluetooth.requestDevice
+                // console.log('TCE: navigator', navigator);
+
+                loadDevice('callee')
+
+            });
+        }
+
+
+    </script>
+</head>
+
+<body onload="onBodyLoad()">
+    <input id="button" type="button" value="click" />
+</body>
+
+</html>
