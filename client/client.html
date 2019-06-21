@@ -45,7 +45,14 @@
         async readManufacturername() {
             const service = await this.device.gatt.getPrimaryService("device_information");
             const characteristic = await service.getCharacteristic("manufacturer_name_string");
-            await characteristic.readValue();
+            console.log('TCE: GenericDevice -> readManufacturername -> characteristic', characteristic);
+            let d = await characteristic.readValue();
+            console.log('TCE: GenericDevice -> readManufacturername -> d', d);
+        }
+        async writeManufacturername(data) {
+            const service = await this.device.gatt.getPrimaryService("device_information");
+            const characteristic = await service.getCharacteristic("manufacturer_name_string");
+            await characteristic.writeValue(data);
         }
 
         disconnect() {
@@ -68,6 +75,8 @@
             try {
                 await genericDevice.request();
                 await genericDevice.connect();
+                await genericDevice.readManufacturername();
+                await genericDevice.writeManufacturername("ppp");
                 /* Do something with genericDevice... */
             } catch (error) {
                 console.log(error);
