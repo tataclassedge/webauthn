@@ -3,75 +3,77 @@
 <title>Client Wen Authn 1</title>
 
 <head>
-    <script type="text/javascript">
 
-        class GenericDevice {
-
-            constructor() {
-                this.device = null;
-                this.onDisconnected = this.onDisconnected.bind(this);
-            }
-
-            async request() {
-                let options = {
-                    "filters": [{
-                        "name": "iPhone"
-                    }],
-                    "optionalServices": ["device_information"]
-                };
-                this.device = await navigator.bluetooth.requestDevice(options);
-                if (!this.device) {
-                    throw "No device selected";
-                }
-                this.device.addEventListener('gattserverdisconnected', this.onDisconnected);
-            }
-
-            async connect() {
-                if (!this.device) {
-                    return Promise.reject('Device is not connected.');
-                }
-                await this.device.gatt.connect();
-            }
-
-            async readManufacturername() {
-                const service = await this.device.gatt.getPrimaryService("device_information");
-                const characteristic = await service.getCharacteristic("manufacturer_name_string");
-                await characteristic.readValue();
-            }
-
-            disconnect() {
-                if (!this.device) {
-                    return Promise.reject('Device is not connected.');
-                }
-                return this.device.gatt.disconnect();
-            }
-
-            onDisconnected() {
-                console.log('Device is disconnected.');
-            }
-        }
-
-        function onBodyLoad(callee) {
-            console.log('TCE: onBodyLoad -> callee', callee);
-            var genericDevice = new GenericDevice();
-
-            button.addEventListener('click', async event => {
-                try {
-                    await genericDevice.request();
-                    await genericDevice.connect();
-                    /* Do something with genericDevice... */
-                } catch (error) {
-                    console.log(error);
-                }
-            });
-        }
-
-
-    </script>
 </head>
 
 <body onload="onBodyLoad()">
     <input id="button" type="button" value="click" />
 </body>
+
+<script type="text/javascript">
+
+    class GenericDevice {
+
+        constructor() {
+            this.device = null;
+            this.onDisconnected = this.onDisconnected.bind(this);
+        }
+
+        async request() {
+            let options = {
+                "filters": [{
+                    "name": "iPhone"
+                }],
+                "optionalServices": ["device_information"]
+            };
+            this.device = await navigator.bluetooth.requestDevice(options);
+            if (!this.device) {
+                throw "No device selected";
+            }
+            this.device.addEventListener('gattserverdisconnected', this.onDisconnected);
+        }
+
+        async connect() {
+            if (!this.device) {
+                return Promise.reject('Device is not connected.');
+            }
+            await this.device.gatt.connect();
+        }
+
+        async readManufacturername() {
+            const service = await this.device.gatt.getPrimaryService("device_information");
+            const characteristic = await service.getCharacteristic("manufacturer_name_string");
+            await characteristic.readValue();
+        }
+
+        disconnect() {
+            if (!this.device) {
+                return Promise.reject('Device is not connected.');
+            }
+            return this.device.gatt.disconnect();
+        }
+
+        onDisconnected() {
+            console.log('Device is disconnected.');
+        }
+    }
+
+    function onBodyLoad(callee) {
+        console.log('TCE: onBodyLoad -> callee', callee);
+        var genericDevice = new GenericDevice();
+
+        button.addEventListener('click', async event => {
+            try {
+                await genericDevice.request();
+                await genericDevice.connect();
+                /* Do something with genericDevice... */
+            } catch (error) {
+                console.log(error);
+            }
+        });
+    }
+
+
+</script>
 
 </html>
