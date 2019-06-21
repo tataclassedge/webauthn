@@ -27,6 +27,7 @@
                 "optionalServices": ["device_information"]
             };
             this.device = await navigator.bluetooth.requestDevice(options);
+            console.log('TCE: GenericDevice -> request -> this.device', this.device);
             if (!this.device) {
                 throw "No device selected";
             }
@@ -37,6 +38,7 @@
             if (!this.device) {
                 return Promise.reject('Device is not connected.');
             }
+            console.log('TCE: GenericDevice -> connect -> this.device', this.device);
             await this.device.gatt.connect();
         }
 
